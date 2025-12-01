@@ -5,15 +5,12 @@ LABEL maintainer="Harness Custom Plugin"
 LABEL description="Harness Custom Drone Plugin for CI/CD pipeline automation"
 LABEL version="1.0.0"
 
-# Set working directory
-WORKDIR /app
-
-# Copy application code
-COPY main.py .
+# Copy application code to the expected location
+COPY main.py /usr/local/bin/plugin.py
 
 # Set environment variables for better Python behavior
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Use exec form for better signal handling
-ENTRYPOINT ["python", "main.py"]
+# Use the specified entrypoint
+ENTRYPOINT python /usr/local/bin/plugin.py

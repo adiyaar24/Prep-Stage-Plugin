@@ -333,18 +333,15 @@ LABEL maintainer="Harness Custom Plugin"
 LABEL description="Harness Custom Drone Plugin for CI/CD pipeline automation"
 LABEL version="1.0.0"
 
-# Set working directory
-WORKDIR /app
-
-# Copy application code
-COPY main.py .
+# Copy application code to the expected location
+COPY main.py /usr/local/bin/plugin.py
 
 # Set environment variables for better Python behavior
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Use exec form for better signal handling
-ENTRYPOINT ["python", "main.py"]
+# Use the specified entrypoint
+ENTRYPOINT python /usr/local/bin/plugin.py
 ```
 
 **Building and Running:**
@@ -364,21 +361,41 @@ docker run --rm \
 
 ### Harness Pipeline Step
 
+**Single Step (Recommended):**
 ```yaml
 - step:
     type: Plugin
     name: Custom Drone Plugin
-    identifier: custom_plugin
+    identifier: custom_drone_plugin
     spec:
-      connectorRef: <+input>
-      image: your-registry/harness-plugin:latest
+      connectorRef: <+input>  # Your Docker connector
+      image: your-registry/harness-custom-plugin:latest
       settings:
         PLUGIN_ACTION: <+pipeline.variables.action>
+        # CREATE-specific variables
         PLUGIN_EXECUTION_ID: <+pipeline.executionId>
         PLUGIN_TRIGGERED_BY_EMAIL: <+pipeline.triggeredBy.email>
+        PLUGIN_USER_DEFINED_NAME: <+pipeline.variables.user_defined_deployment_name>
+        # UPDATE/DELETE-specific variables
+        PLUGIN_PRIMARY_OWNER: <+pipeline.variables.primaryOwner>
+        PLUGIN_DEPLOYMENT_NAME: <+pipeline.variables.deployment_name>
+        PLUGIN_COMPONENT_NAME: <+pipeline.variables.component_name>
+        # Common variables
         PLUGIN_RESOURCE_CONFIG: <+pipeline.variables.resourceConfig>
         PLUGIN_DEBUG_MODE: "false"
+        PLUGIN_LOG_LEVEL: "info"
+      timeout: 10m
 ```
+
+**Required Pipeline Variables:**
+- `action` (String): "create", "update", or "delete"
+- `resourceConfig` (String): JSON configuration
+- `user_defined_deployment_name` (String): For CREATE action
+- `primaryOwner` (String): For UPDATE/DELETE actions
+- `deployment_name` (String): For UPDATE/DELETE actions
+- `component_name` (String): Optional, for UPDATE/DELETE actions
+
+**Complete YAML file available:** See `harness-step.yaml` for copy-paste ready configurations including conditional steps for each action type.
 
 ## Development
 

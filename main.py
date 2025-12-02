@@ -92,19 +92,19 @@ class OutputManager:
             
             # Set environment variable
             os.environ[key] = value
-            self.logger.info(f"📝 Environment Variable Set: {key}={value[:50]}{'...' if len(value) > 50 else ''}")
+            self.logger.info(f"📝 Output Variable Set: {key}={value[:50]}{'...' if len(value) > 50 else ''}")
                 
         except Exception as e:
             self.logger.error(f"Failed to add output {key}: {e}")
             raise PluginError(f"Failed to add output {key}: {e}")
     
     def write_outputs(self) -> None:
-        """Write all outputs to drone output file if available (for debugging)."""
+        """Write all outputs to drone output file if available."""
         if not self.outputs:
             self.logger.info("No outputs to write")
             return
             
-        # Write to drone output file if available (debugging only)
+        # Write to drone output file if available
         drone_output_file = os.environ.get('DRONE_OUTPUT')
         if drone_output_file:
             try:
@@ -113,11 +113,11 @@ class OutputManager:
                 with open(drone_output_file, 'a') as f:
                     for key, value in self.outputs.items():
                         f.write(f"{key}={value}\n")
-                self.logger.debug(f"✅ Debug: Wrote {len(self.outputs)} outputs to {drone_output_file}")
+                self.logger.info(f"✅ Wrote {len(self.outputs)} outputs to {drone_output_file}")
                 
             except Exception as e:
-                self.logger.debug(f"Debug: Failed to write to DRONE_OUTPUT file {drone_output_file}: {e}")
-                # Don't raise exception for debug file write failures
+                self.logger.warning(f"Failed to write to DRONE_OUTPUT file {drone_output_file}: {e}")
+                # Don't raise exception for file write failures
         
         self.logger.info(f"🎯 Generated {len(self.outputs)} output variables")
     
@@ -274,14 +274,22 @@ class CreateActionProcessor(ActionProcessor):
         item_map, workspace_ids = self._process_resource_config(deployment_name, resource_owner)
         
         # Export variables
-        self.output_manager.add_output('RESOURCE_OWNER', resource_owner)
-        self.output_manager.add_output('DEPLOYMENT_NAME', deployment_name)
-        self.output_manager.add_output('USER_DEFINED_DEPLOYMENT_NAME', user_defined_deployment_name)
-        self.output_manager.add_output('item_map', json.dumps(item_map, separators=(',', ':')))
-        self.output_manager.add_output('workspace_ids', workspace_ids)
+        self.output_manager.add_output('resourceOwner', resource_owner)
+        self.output_manager.add_output('deploymentName', deployment_name)
+        self.output_manager.add_output('userDefinedDeploymentName', user_defined_deployment_name)
+        self.output_manager.add_output('itemMap', json.dumps(item_map, separators=(',', ':')))
+        self.output_manager.add_output('workspaceIds', workspace_ids)
+        self.output_manager.add_output('executionId', self.config.execution_id or '')
+        self.output_manager.add_output('triggeredByEmail', self.config.triggered_by_email or '')
+        self.output_manager.add_output('actionType', self.config.action.value)
+        self.output_manager.add_output('resourceCount', str(len(item_map)))
+        self.output_manager.add_output('workspaceCount', str(len(workspace_ids.split(',')) if workspace_ids else 0))
+        self.output_manager.add_output('configEntryCount', str(len(self.config.resource_config.get('entries', []))))
         
         self.logger.info(f"📦 Final Deployment Name: {deployment_name}")
         self.logger.info(f"🔗 Workspace IDs: {workspace_ids}")
+        self.logger.info(f"📊 Resource Count: {len(item_map)}")
+        self.logger.info(f"⚙️  Configuration Entries: {len(self.config.resource_config.get('entries', []))}")
     
     def _generate_deployment_name(self) -> str:
         """Generate deployment name from execution ID."""
@@ -363,14 +371,20 @@ class OtherActionProcessor(ActionProcessor):
         resource_config_json = json.dumps(self.config.resource_config, separators=(',', ':'))
         
         # Export variables
-        self.output_manager.add_output('RESOURCE_OWNER', self.config.primary_owner)
-        self.output_manager.add_output('RESOURCE_CONFIG', resource_config_json)
-        self.output_manager.add_output('DEPLOYMENT_NAME', deployment_name_processed)
-        self.output_manager.add_output('workspace_ids', self.config.component_name or '')
+        self.output_manager.add_output('resourceOwner', self.config.primary_owner)
+        self.output_manager.add_output('resourceConfig', resource_config_json)
+        self.output_manager.add_output('deploymentName', deployment_name_processed)
+        self.output_manager.add_output('workspaceIds', self.config.component_name or '')
+        self.output_manager.add_output('primaryOwner', self.config.primary_owner or '')
+        self.output_manager.add_output('componentName', self.config.component_name or '')
+        self.output_manager.add_output('actionType', self.config.action.value)
+        self.output_manager.add_output('resourceConfigCount', str(len(self.config.resource_config.get('entries', []))))
+        self.output_manager.add_output('workspaceCount', str(1 if self.config.component_name else 0))
         
         self.logger.info(f"👤 Resource Owner: {self.config.primary_owner}")
         self.logger.info(f"📦 Deployment Name: {deployment_name_processed}")
         self.logger.info(f"🔗 Workspace IDs: {self.config.component_name or 'None specified'}")
+        self.logger.info(f"📊 Resource Config Count: {len(self.config.resource_config.get('entries', []))}")
 
 
 class DronePlugin:

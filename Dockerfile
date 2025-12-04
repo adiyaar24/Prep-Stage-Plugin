@@ -5,11 +5,8 @@ LABEL maintainer="Harness Custom Plugin"
 LABEL description="Enhanced Harness Custom Drone Plugin with Git-based Default Values"
 LABEL version="2.0.0"
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    git \
-    ca-certificates \
-    && rm -rf /var/lib/apt/lists/*
+# Install git and ca-certificates
+RUN apt-get update && apt-get install -y git ca-certificates
 
 # Set working directory
 WORKDIR /app

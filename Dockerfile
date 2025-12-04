@@ -2,15 +2,33 @@ FROM python:3.12-slim
 
 # Set metadata
 LABEL maintainer="Harness Custom Plugin"
-LABEL description="Harness Custom Drone Plugin for CI/CD pipeline automation"
-LABEL version="1.0.0"
+LABEL description="Enhanced Harness Custom Drone Plugin with Git-based Default Values"
+LABEL version="2.0.0"
 
-# Copy application code to the expected location
-COPY main.py /usr/local/bin/plugin.py
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt .
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy application code
+COPY main.py enhanced_main.py ./
+COPY src/ ./src/
 
 # Set environment variables for better Python behavior
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 
-# Use the specified entrypoint
-ENTRYPOINT python /usr/local/bin/plugin.py
+# Git repositories will be cloned in current working directory (/app)
+
+# Use enhanced plugin by default, with fallback to original
+ENTRYPOINT ["python", "enhanced_main.py"]

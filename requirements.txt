@@ -1,0 +1,17 @@
+# Core plugin dependencies
+# (Add your existing dependencies here if any)
+
+# Git integration dependencies
+GitPython==3.1.40
+urllib3==2.1.0
+
+# JSON and data processing
+# (These are typically included with Python but listed for completeness)
+# pathlib - included in Python 3.4+
+# json - included in Python standard library
+# logging - included in Python standard library
+# subprocess - included in Python standard library
+# shutil - included in Python standard library
+
+# Type hints and dataclasses for older Python versions
+typing-extensions==4.8.0

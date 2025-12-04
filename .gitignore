@@ -1,3 +1,10 @@
 .env
 drone_output.txt
 harness_output_secret.txt
+workflow.yaml
+EXPORT_VARIABLES.md
+PIPELINE_CONFIGURATION_GUIDE.md
+WORKFLOW_INTEGRATION.md
+test_environment_setup.sh
+test_integration.py
+ARCHITECTURE_README.md
